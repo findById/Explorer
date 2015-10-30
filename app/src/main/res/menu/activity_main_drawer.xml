@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_store"
+            android:icon="@android:drawable/ic_menu_directions"
+            android:title="@string/action_nav_store" />
+        <item
+            android:id="@+id/nav_disk"
+            android:checked="true"
+            android:icon="@android:drawable/ic_menu_agenda"
+            android:title="@string/action_nav_disk" />
+        <item
+            android:id="@+id/nav_camera"
+            android:icon="@android:drawable/ic_menu_camera"
+            android:title="@string/action_nav_camera" />
+        <item
+            android:id="@+id/nav_download"
+            android:icon="@android:drawable/ic_menu_always_landscape_portrait"
+            android:title="@string/action_nav_download" />
+        <item
+            android:id="@+id/nav_pictures"
+            android:icon="@android:drawable/ic_menu_gallery"
+            android:title="@string/action_nav_picture" />
+        <item
+            android:id="@+id/nav_music"
+            android:icon="@android:drawable/ic_media_play"
+            android:title="@string/action_nav_music" />
+        <item
+            android:id="@+id/nav_movies"
+            android:icon="@android:drawable/ic_menu_slideshow"
+            android:title="@string/action_nav_movie" />
+    </group>
+
+    <item android:title="@string/action_other">
+        <menu>
+            <item
+                android:id="@+id/nav_manage"
+                android:icon="@android:drawable/ic_menu_preferences"
+                android:title="@string/action_settings" />
+            <item
+                android:id="@+id/nav_feedback"
+                android:icon="@android:drawable/ic_menu_send"
+                android:title="@string/action_feedback" />
+        </menu>
+    </item>
+
+</menu>
