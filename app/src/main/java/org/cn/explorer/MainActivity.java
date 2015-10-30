@@ -215,7 +215,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             public void run() {
                 onNavigationChanged(AppConfig.currentNavigationId);
             }
-        }, 500);
+        }, 300);
 
         return true;
     }

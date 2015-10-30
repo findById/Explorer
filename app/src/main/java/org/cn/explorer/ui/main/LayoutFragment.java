@@ -93,13 +93,16 @@ public class LayoutFragment extends BaseFragment implements ExpFragment.OnOpenFo
     private void parseUri(String path) {
         Bundle bundle = new Bundle();
         bundle.putString(Const.ROOT_PATH, path);
-        switchFragment(path, bundle);
+        createFragment(path, bundle);
         childFragment.setOnOpenFolderListener(this);
         stack.push(path);
     }
 
-    private synchronized void switchFragment(String tag, Bundle data) {
+    private synchronized void createFragment(String tag, Bundle data) {
         childFragmentTransaction = childFragmentManager.beginTransaction();
+        if (childFragment != null) {
+            childFragmentTransaction.detach(childFragment);
+        }
         ExpFragment tmp = (ExpFragment) childFragmentManager.findFragmentByTag(tag);
         if (tmp == null) {
             tmp = new ExpFragment();
@@ -108,14 +111,10 @@ public class LayoutFragment extends BaseFragment implements ExpFragment.OnOpenFo
             }
             childFragmentTransaction.add(R.id.contentPanel, tmp, tag);
             childFragmentTransaction.addToBackStack(null);
-            childFragmentTransaction.commit();
         } else {
-            if (childFragment != null) {
-                childFragmentTransaction.detach(childFragment);
-            }
             childFragmentTransaction.attach(tmp);
-            childFragmentTransaction.commit();
         }
+        childFragmentTransaction.commit();
         childFragment = tmp;
     }
 
