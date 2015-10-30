@@ -8,6 +8,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -29,28 +30,26 @@ import org.cn.explorer.utils.FileUtil;
 import org.cn.utils.AppUtil;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class MainActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, ExpFragment.OnOpenFolderListener {
-
-    private LayoutFragment currentFragment;
-    private Map<String, LayoutFragment> fragmentMap = new HashMap<>();
-
-    private Toolbar mToolbar;
-    private View loading;
 
     private FragmentManager mFragmentManager;
     private FragmentTransaction mFragmentTransaction;
 
+    private LayoutFragment currentFragment;
+
+    private NavigationView mNavigationView;
+    private Toolbar mToolbar;
+    private View loading;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        this.mToolbar = toolbar;
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -69,29 +68,27 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             }
         });
 
-        init();
+        this.mNavigationView = navigationView;
+        this.mToolbar = toolbar;
+        mFragmentManager = getSupportFragmentManager();
+        mFragmentTransaction = mFragmentManager.beginTransaction();
+
         initView();
         initData();
     }
 
-    private void init() {
-        mFragmentManager = getSupportFragmentManager();
-        mFragmentTransaction = mFragmentManager.beginTransaction();
-    }
-
     private void initView() {
         loading = this.findViewById(R.id.loading);
-
-        AppConfig.currentFilePath = new File(Environment.getExternalStorageDirectory() + File.separator);
-
-        Bundle bundle = new Bundle();
-        bundle.putString(Const.ROOT_PATH, "" + AppConfig.currentFilePath);
-        currentFragment = getFragment("EXPLORER_DISK", bundle);
-        onChangeFragment("EXPLORER_DISK");
-
     }
 
     private void initData() {
+
+        if (AppConfig.currentNavigationId == 0) {
+            AppConfig.currentNavigationId = R.id.nav_disk;
+        }
+        mNavigationView.setCheckedItem(AppConfig.currentNavigationId);
+        onNavigationChanged(AppConfig.currentNavigationId);
+
     }
 
     @Override
@@ -211,88 +208,93 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             currentFragment.clearSelected();
         }
 
-        String tag = "";
-        // Handle navigation view item clicks here.
-        switch (item.getItemId()) {
-            case R.id.nav_store:
-                tag = "EXPLORER_STORE";
-                AppConfig.currentFilePath = new File("/");
-                break;
-            case R.id.nav_disk:
-                tag = "EXPLORER_DISK";
-                AppConfig.currentFilePath = new File(Environment.getExternalStorageDirectory() + File.separator);
-                break;
-            case R.id.nav_camera:
-                tag = "EXPLORER_CAMERA";
-                AppConfig.currentFilePath = new File(Environment.getExternalStorageDirectory() + File.separator, "DCIM");
-                break;
-            case R.id.nav_download:
-                tag = "EXPLORER_DOWNLOAD";
-                AppConfig.currentFilePath = new File(Environment.getExternalStorageDirectory() + File.separator, "Download");
-                break;
-            case R.id.nav_music:
-                tag = "EXPLORER_MUSIC";
-                AppConfig.currentFilePath = new File(Environment.getExternalStorageDirectory() + File.separator, "Music");
-                break;
-            case R.id.nav_pictures:
-                tag = "EXPLORER_PICTURE";
-                AppConfig.currentFilePath = new File(Environment.getExternalStorageDirectory() + File.separator, "Pictures");
-                break;
-            case R.id.nav_movies:
-                tag = "EXPLORER_MOVIES";
-                AppConfig.currentFilePath = new File(Environment.getExternalStorageDirectory() + File.separator, "Movies");
-                break;
-            case R.id.nav_manage:
-                return true;
-            case R.id.nav_feedback:
-                return true;
-            default:
-                // ignore
-                return true;
-        }
+        AppConfig.currentNavigationId = item.getItemId();
 
-        Bundle bundle = new Bundle();
-        bundle.putString(Const.ROOT_PATH, AppConfig.currentFilePath.getPath());
-        currentFragment = getFragment(tag, bundle);
-        onChangeFragment(tag);
+        new android.os.Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                onNavigationChanged(AppConfig.currentNavigationId);
+            }
+        }, 500);
 
         return true;
     }
 
-    private LayoutFragment getFragment(String key, Bundle bundle) {
-        LayoutFragment fragment = fragmentMap.get(key);
-        if (fragment == null) {
-            fragment = new LayoutFragment();
-            add(fragment, key, bundle);
-            fragmentMap.put(key, fragment);
+    private boolean onNavigationChanged(int id) {
+        String tag = "";
+        // Handle navigation view item clicks here.
+        switch (id) {
+            case R.id.nav_store:
+                tag = "DIRECTORY_STORE";
+                AppConfig.currentFilePath = new File("/");
+                break;
+            case R.id.nav_disk:
+                tag = "DIRECTORY_DISK";
+                AppConfig.currentFilePath = Environment.getExternalStoragePublicDirectory(File.separator);
+                break;
+            case R.id.nav_camera:
+                tag = "DIRECTORY_CAMERA";
+                AppConfig.currentFilePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
+                break;
+            case R.id.nav_download:
+                tag = "DIRECTORY_DOWNLOADS";
+                AppConfig.currentFilePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                break;
+            case R.id.nav_pictures:
+                tag = "DIRECTORY_PICTURES";
+                AppConfig.currentFilePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+                break;
+            case R.id.nav_music:
+                tag = "DIRECTORY_MUSIC";
+                AppConfig.currentFilePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
+                break;
+            case R.id.nav_movies:
+                tag = "DIRECTORY_MOVIES";
+                AppConfig.currentFilePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
+                break;
+            case R.id.nav_manage:
+                break;
+            case R.id.nav_feedback:
+                break;
+            default:
+                // ignore
+                break;
         }
-        return fragment;
+        if (TextUtils.isEmpty(tag)) {
+            return true;
+        }
+        Log.d("MA", "" + AppConfig.currentFilePath.getPath());
+        Bundle bundle = new Bundle();
+        bundle.putString(Const.ROOT_PATH, AppConfig.currentFilePath.getPath());
+        onChangeFragment(tag, bundle);
+        return true;
     }
 
-    String mCurrentTag;
-
-    private void onChangeFragment(String tag) {
-        if (tag == null) {
+    private void onChangeFragment(String key, Bundle bundle) {
+        if (key == null) {
             return;
         }
-        if (mCurrentTag != null && mCurrentTag.equals(tag)) {
-            return;
-        }
-        mCurrentTag = tag;
-        Fragment tmp = mFragmentManager.findFragmentByTag(tag);
+        LayoutFragment tmp = (LayoutFragment) mFragmentManager.findFragmentByTag(key);
         if (tmp == null) {
-            return;
-        }
-        List<Fragment> list = mFragmentManager.getFragments();
-        if (list != null && list.size() > 0) {
-            mFragmentTransaction = mFragmentManager.beginTransaction();
-            for (int i = 0; i < list.size(); i++) {
-                mFragmentTransaction.detach(list.get(i));
+            tmp = new LayoutFragment();
+            add(tmp, key, bundle);
+        } else {
+            List<Fragment> list = mFragmentManager.getFragments();
+            if (list != null && list.size() > 0) {
+                mFragmentTransaction = mFragmentManager.beginTransaction();
+                for (int i = 0; i < list.size(); i++) {
+                    mFragmentTransaction.detach(list.get(i));
+                }
+                mFragmentTransaction.commit();
             }
+            mFragmentTransaction = mFragmentManager.beginTransaction();
+            if (currentFragment != null) {
+                mFragmentTransaction.detach(currentFragment);
+            }
+            mFragmentTransaction.attach(tmp);
             mFragmentTransaction.commit();
         }
-        mFragmentTransaction = mFragmentManager.beginTransaction();
-        mFragmentTransaction.attach(tmp).commit();
+        currentFragment = tmp;
     }
 
     private FragmentTransaction add(Fragment fragment, String tag, Bundle data) {
@@ -309,17 +311,20 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         if (tmp != null) {
             mFragmentTransaction.remove(tmp);
         }
-        fragment.setArguments(data);
+        if (data != null) {
+            fragment.setArguments(data);
+        }
         mFragmentTransaction.add(R.id.contentPanel, fragment, tag);
         mFragmentTransaction.addToBackStack(null);
         mFragmentTransaction.commit();
-        mFragmentManager.executePendingTransactions();
+        // mFragmentManager.executePendingTransactions();
         return mFragmentTransaction;
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Log.d("MA", "onDestroy");
     }
 
     @Override

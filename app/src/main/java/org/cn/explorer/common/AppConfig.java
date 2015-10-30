@@ -15,4 +15,6 @@ public class AppConfig {
 
     public static File currentFilePath = null;
 
+    public static int currentNavigationId = 0;
+
 }

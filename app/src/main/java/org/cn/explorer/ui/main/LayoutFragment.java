@@ -3,7 +3,6 @@ package org.cn.explorer.ui.main;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
@@ -11,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import org.cn.explorer.MainActivity;
 import org.cn.explorer.R;
 import org.cn.explorer.common.Const;
 import org.cn.explorer.ui.BaseFragment;
@@ -34,8 +34,8 @@ public class LayoutFragment extends BaseFragment implements ExpFragment.OnOpenFo
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof AppCompatActivity) {
-            childFragmentManager = ((AppCompatActivity) context).getSupportFragmentManager();
+        if (context instanceof MainActivity) {
+            childFragmentManager = ((MainActivity) context).getSupportFragmentManager();
             childFragmentTransaction = childFragmentManager.beginTransaction();
         }
     }
@@ -66,6 +66,7 @@ public class LayoutFragment extends BaseFragment implements ExpFragment.OnOpenFo
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
+        outState.putString(Const.ROOT_PATH, path);
         outState.putSerializable("stack", stack);
         super.onSaveInstanceState(outState);
     }
@@ -73,9 +74,7 @@ public class LayoutFragment extends BaseFragment implements ExpFragment.OnOpenFo
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_layout, null, false);
-        initView(view);
-        return view;
+        return inflater.inflate(R.layout.fragment_layout, container, false);
     }
 
     @Override
@@ -89,58 +88,35 @@ public class LayoutFragment extends BaseFragment implements ExpFragment.OnOpenFo
     @Override
     public void setArguments(Bundle args) {
         super.setArguments(args);
-        if (args != null) {
-            path = args.getString(Const.ROOT_PATH);
-        }
-    }
-
-    private void initView(View view) {
-
-    }
-
-    private void initData() {
-
     }
 
     private void parseUri(String path) {
         Bundle bundle = new Bundle();
-        bundle.putString("current.path", path);
+        bundle.putString(Const.ROOT_PATH, path);
         switchFragment(path, bundle);
         childFragment.setOnOpenFolderListener(this);
         stack.push(path);
     }
 
-    private void switchFragment(String tag, Bundle data) {
+    private synchronized void switchFragment(String tag, Bundle data) {
         childFragmentTransaction = childFragmentManager.beginTransaction();
-        Fragment tmp = childFragmentManager.findFragmentByTag(tag);
-        if (childFragment == null) {
-            childFragment = new ExpFragment();
+        ExpFragment tmp = (ExpFragment) childFragmentManager.findFragmentByTag(tag);
+        if (tmp == null) {
+            tmp = new ExpFragment();
             if (data != null) {
-                childFragment.setArguments(data);
+                tmp.setArguments(data);
             }
-            childFragmentTransaction.add(R.id.contentPanel, childFragment, tag);
+            childFragmentTransaction.add(R.id.contentPanel, tmp, tag);
             childFragmentTransaction.addToBackStack(null);
             childFragmentTransaction.commit();
-        } else if (childFragment != tmp) {
-            if (!childFragment.isDetached()) {
+        } else {
+            if (childFragment != null) {
                 childFragmentTransaction.detach(childFragment);
             }
-            if (tmp == null) {
-                childFragment = new ExpFragment();
-            } else {
-                childFragment = (ExpFragment) tmp;
-            }
-            if (childFragment.isDetached()) {
-                childFragmentTransaction.attach(childFragment);
-            } else if (!childFragment.isAdded()) {
-                if (data != null) {
-                    childFragment.setArguments(data);
-                }
-                childFragmentTransaction.add(R.id.contentPanel, childFragment, tag);
-                childFragmentTransaction.addToBackStack(null);
-            }
+            childFragmentTransaction.attach(tmp);
             childFragmentTransaction.commit();
         }
+        childFragment = tmp;
     }
 
     public synchronized boolean onBackPressed() {
@@ -148,7 +124,7 @@ public class LayoutFragment extends BaseFragment implements ExpFragment.OnOpenFo
             childFragmentTransaction = childFragmentManager.beginTransaction();
             if (childFragment != null) {
                 childFragmentTransaction.detach(childFragment);
-                // childFragmentTransaction.remove(childFragment);
+                childFragmentTransaction.remove(childFragment);
             }
             stack.pop();
             childFragment = (ExpFragment) childFragmentManager.findFragmentByTag(stack.peek());

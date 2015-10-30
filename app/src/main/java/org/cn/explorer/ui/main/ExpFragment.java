@@ -105,7 +105,6 @@ public class ExpFragment extends BaseFragment implements ActionMode.Callback {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
         if (!stack.isEmpty()) {
             loadData(new File(stack.peek()));
         }
@@ -134,6 +133,9 @@ public class ExpFragment extends BaseFragment implements ActionMode.Callback {
     @Override
     public void setArguments(Bundle args) {
         super.setArguments(args);
+        if (args != null) {
+            path = args.getString(Const.ROOT_PATH);
+        }
     }
 
     public void reload() {
