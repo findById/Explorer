@@ -54,7 +54,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
+        drawer.addDrawerListener(toggle);
         toggle.syncState();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
@@ -148,6 +148,19 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                     }
                 });
                 break;
+            case R.id.action_hidden_folder: {
+                if (AppConfig.showHideFile) {
+                    item.setChecked(false);
+                    AppConfig.showHideFile = false;
+                } else {
+                    item.setChecked(true);
+                    AppConfig.showHideFile = true;
+                }
+                if (currentFragment != null) {
+                    currentFragment.reload();
+                }
+                break;
+            }
             case R.id.action_sort:
                 item.getSubMenu().getItem(0).setChecked(false);
                 item.getSubMenu().getItem(1).setChecked(false);
